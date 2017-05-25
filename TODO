@@ -1,0 +1,6 @@
+* document GMail behavior (IMAP, filters, etc.)
+* battle testing the import script
+* documentation on establishing credentials, enabling APIs in Apps Script etc.
+* better testing of the dovecot workflow
+* document dovecot setup
+* automating getmail startup (systemd unit? anything that should be done directly in Fedora?)
