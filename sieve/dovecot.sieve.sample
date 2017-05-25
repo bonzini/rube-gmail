@@ -1,0 +1,26 @@
+# Sample ~/.dovecot.sieve file
+#
+# Author: Paolo Bonzini <pbonzini@redhat.com>
+# License: AGPLv3
+
+require ["imap4flags", "regex", "fileinto", "variables", "mailbox", "include"];
+
+set "global.myname" "yourname@example.com";
+
+if address :is "from" "bugzilla@redhat.com" {
+  if header :is "x-bugzilla-type" "new" {
+    addflag "new";
+  }
+  if header :is "x-bugzilla-status" ["CLOSED", "VERIFIED", "RELEASE_PENDING"] {
+    addflag "closed";
+  }
+  if not header :is "x-bugzilla-reason" "None" {
+    addflag "mine";
+  }
+  fileinto :create "bugzilla";
+  if header :contains "x-bugzilla-reason" "needinfo" {
+    keep;
+  }
+}
+
+include :personal "dovecot-gmail-labels";

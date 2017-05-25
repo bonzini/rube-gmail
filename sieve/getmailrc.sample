@@ -1,0 +1,16 @@
+# Sample ~/.getmail/getmailrc file
+
+[retriever]
+type = SimpleIMAPSSLRetriever
+server = imap.gmail.com
+username = yourname@example.com
+password = hunter2
+mailboxes = ("[Gmail]/All Mail",)
+move_on_delete = "[Gmail]/Trash"
+
+[options]
+delete = true
+
+[destination]
+type = MDA_external
+path = /usr/libexec/dovecot/deliver
