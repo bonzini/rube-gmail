@@ -102,6 +102,8 @@ https://developers.google.com/gmail/api/quickstart/python.""")
                         help='Do not actually do anything')
     parser.add_argument('--create_labels', action=AppendAllAction, nargs='+',
                         help='Create the given labels', metavar='LABEL')
+    parser.add_argument('--hidden', action='store_true',
+                        help='Hide the created labels from the label and message list')
     parser.add_argument('--delete_labels', action=AppendAllAction, nargs='+',
                         help='Delete the given labels', metavar='LABEL')
     parser.add_argument('--create_list_filter', action=StoreOnceAction,
@@ -158,6 +160,10 @@ https://developers.google.com/gmail/api/quickstart/python.""")
         if not (i in labelsByName):
             args.create_labels.append(i)
 
+    if len(args.create_labels) == 0 and args.hidden:
+        print('--hidden specified but no labels would be created.', file=sys.stderr)
+        sys.exit(1)
+
     # Now execute the commands
     did_something = False
     if len(args.delete_labels):
@@ -183,6 +189,9 @@ https://developers.google.com/gmail/api/quickstart/python.""")
                 if not args.dry_run:
                     print("Creating label " + i + "...")
                     body = {'name': i}
+                    if args.hidden:
+                        body['messageListVisibility'] = 'hide'
+                        body['labelListVisibility'] = 'labelHide'
                     label = service.users().labels().\
                                 create(userId='me', body=body).\
                                 execute(num_retries=args.num_retries)
