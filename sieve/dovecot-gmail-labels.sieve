@@ -13,13 +13,18 @@ if string :is "${global.sentmail}" "" {
 if string :is "${global.myname}" "" {
   set "global.myname" "nonexistent@example.com";
 }
+if string :is "${global.respectinbox}" "" {
+  set "global.respectinbox" "y";
+}
 
 # first of all, file into sent mail and inbox
 if header :contains "x-gmail-labels" "\\Sent" {
   fileinto "${global.sentmail}";
 }
-if header :contains "x-gmail-labels" "\\Inbox" {
-  keep;
+if string :is "${global.respectinbox}" "y" {
+  if header :contains "x-gmail-labels" "\\Inbox" {
+    keep;
+  }
 }
 
 # add spaces to the sides to facilitate matching words
