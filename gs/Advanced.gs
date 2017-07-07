@@ -239,15 +239,6 @@ function advancedMailingListToInbox(labelName, toCcQuery) {
 }
 
 function advancedMailingListToInboxFilter() {
-  var identities = GmailApp.getAliases();
-  var toCcQuery = '';
-  identities.push(Session.getActiveUser().getEmail());
-  for (i in identities) {
-    var identity = identities[i];
-    toCcQuery = toCcQuery + ' to:' + identity + ' cc:' + identity;
-  }
-  toCcQuery = '{' + toCcQuery + '}';
-
   // Find all filters that are associated to a "list:xxx" query and
   // that add a label.  These are the labels we need to process.
   //
@@ -272,7 +263,7 @@ function advancedMailingListToInboxFilter() {
   for (var i = 0; i < labels.length; i++) {
     var label = labels[i];
     if (label.type == 'user' && label.id in mailingListLabels) {
-      advancedMailingListToInbox(label.name, toCcQuery);
+      advancedMailingListToInbox(label.name, 'to:me');
     }
   }
 }
