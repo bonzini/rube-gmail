@@ -167,11 +167,20 @@ function advancedBugzilla(label) {
       }
     }
     
-    if ('x-bugzilla-assigned-to' in h) {
-      var assigned = h['x-bugzilla-assigned-to'].toLowerCase();
-      if (assigned == BUGZILLA_USER) {
+    if ('x-bugzilla-type' in h) {
+      var type = h['x-bugzilla-type'].toLowerCase();
+      if (type == 'new') {
+        messagesForNew.push(messageId)
+        if ('x-bugzilla-priority' in h && 'x-bugzilla-severity' in h) {
+          var priority = h['x-bugzilla-priority'].toLowerCase();
+          var severity = h['x-bugzilla-severity'].toLowerCase();
+          if (priority == 'urgent' || severity == 'urgent') {
+            messagesForInbox.push(messageId);
+          }
+        }
+      }
+      if (type == 'whine') {
         messagesForInbox.push(messageId);
-        messagesForMine.push(messageId);
       }
     }
 
