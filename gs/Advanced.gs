@@ -130,8 +130,9 @@ function advancedGetBugzillaHeaders() {
     return haystack.substr(i, str.length) == str;
   }
   
+  var INDEX = 0;
   var messages = searchMessages('label:bugzilla');
-  var headers = getHeadersDictionary(getMessageById(messages[0].id));
+  var headers = getHeadersDictionary(getMessageById(messages[INDEX].id));
   for (k in headers) {
     if (stringAt(k, 'x-bugzilla-', 0)) Logger.log(k + ' "' + headers[k] + '"');
   }
@@ -139,6 +140,7 @@ function advancedGetBugzillaHeaders() {
 
 function advancedBugzilla(label) {
   // the actual filter
+  var BUGZILLA_USER - Session.getActiveUer().getEmail();
   var labelsByName = getLabelIdsByName();
   var LABEL_MINE = labelsByName[label + "/mine"];
   var LABEL_CLOSED = labelsByName[label + "/closed"];
@@ -159,17 +161,29 @@ function advancedBugzilla(label) {
     var h = getHeadersDictionary(message);
     var time = parseInt(message.internalDate);
 
-    if (h['x-bugzilla-type'] == 'new') {
-      messagesForNew.push(messageId)
+    if ('x-bugzilla-type' in h) {
+      if (h['x-bugzilla-type'] == 'new') {
+        messagesForNew.push(messageId)
+      }
+    }
+    
+    if ('x-bugzilla-assigned-to' in h) {
+      var assigned = h['x-bugzilla-assigned-to'].toLowerCase();
+      if (assigned == BUGZILLA_USER) {
+        messagesForInbox.push(messageId);
+        messagesForMine.push(messageId);
+      }
     }
 
-    if (h['x-bugzilla-status'] == 'CLOSED' || h['x-bugzilla-status'] == 'VERIFIED' || h['x-bugzilla-status'] == 'RELEASE_PENDING') {
-      if (!(threadId in threadsForClosed) || threadsForClosed[threadId] < time) {
-        threadsForClosed[threadId] = time;
-      }
-    } else {
-      if (!(threadId in threadsForOpen) || threadsForOpen[threadId] < time) {
-        threadsForOpen[threadId] = time;
+    if ('x-bugzilla-status' in h) {
+      if (h['x-bugzilla-status'] == 'CLOSED' || h['x-bugzilla-status'] == 'VERIFIED' || h['x-bugzilla-status'] == 'RELEASE_PENDING') {
+        if (!(threadId in threadsForClosed) || threadsForClosed[threadId] < time) {
+          threadsForClosed[threadId] = time;
+        }
+      } else {
+        if (!(threadId in threadsForOpen) || threadsForOpen[threadId] < time) {
+          threadsForOpen[threadId] = time;
+        }
       }
     }
 
