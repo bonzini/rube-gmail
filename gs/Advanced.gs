@@ -140,7 +140,7 @@ function advancedGetBugzillaHeaders() {
 
 function advancedBugzilla(label) {
   // the actual filter
-  var BUGZILLA_USER - Session.getActiveUer().getEmail();
+  var BUGZILLA_USER = Session.getActiveUser().getEmail();
   var labelsByName = getLabelIdsByName();
   var LABEL_MINE = labelsByName[label + "/mine"];
   var LABEL_CLOSED = labelsByName[label + "/closed"];
