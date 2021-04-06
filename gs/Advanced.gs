@@ -94,8 +94,9 @@ function getMessageById(messageId) {
 }
 
 function searchMessages(q) {
-  var response = Gmail.Users.Messages.list('me', { q: q });
-  return response.messages;
+  Logger.log('>> ' + q)
+  var response = Gmail.Users.Messages.list('me', { q: '-is:chats ' + q });
+  return response.messages ? response.messages : [];
 }
 
 function addLabelToMessages(ids, label) {
@@ -165,7 +166,7 @@ function advancedBugzilla(label) {
       if (reason != 'none') {
         messagesForMine.push(messageId);
       }
-      if (reason.search('needinfo') != -1) {
+      if (reason.search('needinfo') != -1 || reason.search('canceled') != -1) {
         messagesForInbox.push(messageId);
       }
     }
