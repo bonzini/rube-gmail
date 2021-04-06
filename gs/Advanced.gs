@@ -311,6 +311,49 @@ function doMailingListsToFolder(allMessages, unprocessedLabel, destLabel, toCcQu
   }
 }
 
+/////////////////////////////////////////////////////////////////////////
+
+function listLabels() {
+  var response = Gmail.Users.Labels.list('me');
+  if (response.labels.length == 0) {
+    Logger.log("No labels found.");
+  } else {
+    Logger.log("Labels:");
+    for (var i = 0; i < response.labels.length; i++) {
+      var label = response.labels[i];
+      Logger.log("- %s", label.name);
+    }
+  }
+}
+
+function listFiltersByLabel() {
+  var filters = Gmail.Users.Settings.Filters.list('me').filter;
+  var labelsByName = getLabelIdsByName();
+  for (label in labelsByName) {
+    var found = [];
+    for (var i = 0; i < filters.length; i++) {
+      var filter = filters[i];
+      if (!('query' in filter.criteria) || !('addLabelIds' in filter.action)) {
+        continue;
+      }
+      var labelIds = filter.action.addLabelIds;
+      for (j in labelIds) {
+        if (labelIds[j] == labelsByName[label]) {
+          found.push(filter);
+          break;
+        }
+      }
+    }
+
+    if (found.length) {
+      Logger.log(label);
+      for (var i = 0; i < found.length; i++) {
+        Logger.log('>> ' + found[i].criteria.query);
+      }
+    }
+  }
+}
+
 function gmailFilters() {
   var allMessages = [];
   var labelsByName = getLabelIdsByName();
