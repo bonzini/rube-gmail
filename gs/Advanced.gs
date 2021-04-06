@@ -1,21 +1,18 @@
 // Sample Google Apps Script for filtering Bugzilla and mailing lists
 // using the Google Apps Script advanced API
 //
-// Note: the Google Apps Script advanced API is experimental and must be
-// enabled manually.  Unfortunately the simple API is not enough.  See
-// https://developers.google.com/apps-script/guides/services/advanced
+// Note: the Google Apps Script advanced API must be enabled manually.
+// See https://developers.google.com/apps-script/guides/services/advanced
 //
 // Bugzilla filter
 // ---------------
-// This works together with a server filter like
-//   from:bugzilla@redhat.com -> Skip inbox, star it, Apply label "bugzilla"
+// This works together with a pair of server filters like
+//   from:bugzilla@redhat.com -> Skip inbox, Apply label "unprocessed"
+//   from:bugzilla@redhat.com -> Skip inbox, Apply label "bugzilla"
 //
 // There are three more labels nested under "bugzilla" ("closed", mine", "new")
-// Starring the message makes it easy to do the heavier processing just once
-// for each message.  Unfortunately it means you cannot use the star for your
-// own business.  It should be possible to have an "unprocessed" label instead,
-// but the star doesn't clutter the webmail screen so it's nicer in that
-// respect.
+// The unprocessed label makes it easy to do the heavier processing just once
+// for each message.
 //
 // Mailing list filter
 // -------------------
@@ -31,17 +28,22 @@
 // "skip inbox" is implemented internally as "remove inbox label".
 //
 // This filter tries to move back such messages in the inbox.  To use it,
-// modify the "list:foo@bar.org" filter to also star the message.  For example:
-//   list:qemu-devel@nongnu.org -> Skip inbox, star it, Apply label "qemu-devel"
+// duplicate the "list:foo@bar.org" filter to also apply the "unprocessed" label.
+//  For example:
+//   list:qemu-devel@nongnu.org -> Skip inbox, Apply label "unprocessed",
+//   list:qemu-devel@nongnu.org -> Skip inbox, Apply label "qemu-devel"
 //
 // Such a filter can be created for example with
 //   python gmail-filter.py --json /path/to/client_secret.json \
 //        --create_list_filter qemu-devel@nongnu.org \
-//        --star --skip_inbox --add_label qemu-devel
+//        --skip_inbox --add_label qemu-devel
+//   python gmail-filter.py --json /path/to/client_secret.json \
+//        --create_list_filter qemu-devel@nongnu.org \
+//        --skip_inbox --add_label unprocessed
 //
 // This Javascript filter looks at GMail server side filters that have a
 // "list:foo@bar.org" query and an "add label" action.  It then looks for
-// starred messages with that label and detects those that should be in the
+// unprocessed messages with that label and detects those that should be in the
 // inbox by two strategies:
 //  - anything that has you in to/cc.   This does _not_ handle subscribing with
 //    yourname+something@example.com.
@@ -251,10 +253,11 @@ function gmailFilters() {
   var allMessages = [];
   var labelsByName = getLabelIdsByName();
   Logger.log('starting bugzilla filter')
-  doBugzilla(labelsByName, 'STARRED', allMessages, "bugzilla");
+  // replace the second argument with 'STARRED' to use star instead of an "unprocessed" label
+  doBugzilla(labelsByName, labelsByName['unprocessed'], allMessages, "bugzilla");
   Logger.log('starting mailing list filter')
-  doMailingListsToFolder(allMessages, 'STARRED', 'INBOX', 'to:me');
+  doMailingListsToFolder(allMessages, labelsByName['unprocessed'], 'INBOX', 'to:me');
   Logger.log('processed ' + allMessages.length + ' messages')
-  removeLabelFromMessages(allMessages, 'STARRED');
+  removeLabelFromMessages(allMessages, labelsByName['unprocessed']);
   Logger.log('done')
 }
