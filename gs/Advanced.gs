@@ -124,19 +124,6 @@ function removeLabelFromThreads(ids, label) {
 
 /////////////////////////////////////////////////////////////////////////
 
-function advancedGetBugzillaHeaders() {
-  // test code
-  function stringAt(haystack, str, i) {
-    return haystack.substr(i, str.length) == str;
-  }
-  
-  var messages = searchMessages('label:bugzilla');
-  var headers = getHeadersDictionary(getMessageById(messages[0].id));
-  for (k in headers) {
-    if (stringAt(k, 'x-bugzilla-', 0)) Logger.log(k + ' "' + headers[k] + '"');
-  }
-}
-
 function advancedBugzilla(label) {
   // the actual filter
   var labelsByName = getLabelIdsByName();
