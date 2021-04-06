@@ -125,12 +125,13 @@ function removeLabelFromThreads(ids, label) {
 
 /////////////////////////////////////////////////////////////////////////
 
-function doBugzilla(labelsByName, allMessages, label) {
+function doBugzilla(labelsByName, unprocessedLabel, allMessages, label) {
   // the actual filter
+  var unprocessedQuery = unprocessedLabel == 'STARRED' ? 'is:starred' : 'label:unprocessed';
   var LABEL_MINE = labelsByName[label + "/mine"];
   var LABEL_CLOSED = labelsByName[label + "/closed"];
   var LABEL_NEW = labelsByName[label + "/new"];
-  var messages = searchMessages('label:' + label + ' is:starred');
+  var messages = searchMessages(unprocessedQuery + ' label:' + label);
   
   var threadsForClosed = {}
   var threadsForOpen = {}
@@ -193,8 +194,9 @@ function doBugzilla(labelsByName, allMessages, label) {
 
 /////////////////////////////////////////////////////////////////////////
 
-function doMailingListToInbox(labelName, allMessages, toCcQuery) {
-  var messages = searchMessages('label:' + labelName + ' is:starred ' + toCcQuery);
+function doMailingListToInbox(labelName, unprocessedLabel, allMessages, toCcQuery) {
+  var unprocessedQuery = unprocessedLabel == 'STARRED' ? 'is:starred' : 'label:unprocessed';
+  var messages = searchMessages(unprocessedQuery + ' label:' + labelName + ' ' + toCcQuery);
   var messagesForInbox = [];
   for (i in messages) {
     var messageId = messages[i].id;
@@ -202,7 +204,7 @@ function doMailingListToInbox(labelName, allMessages, toCcQuery) {
     messagesForInbox.push(messageId);
   }
 
-  messages = searchMessages('label:' + labelName + ' is:starred -' + toCcQuery);
+  messages = searchMessages(unprocessedQuery + ' label:' + labelName + ' -' + toCcQuery);
   var messagesForInbox = [];
   for (i in messages) {
     var messageId = messages[i].id
@@ -216,7 +218,7 @@ function doMailingListToInbox(labelName, allMessages, toCcQuery) {
   addLabelToMessages(messagesForInbox, 'INBOX');
 }
 
-function doMailingListsToInbox(allMessages) {
+function doMailingListsToInbox(allMessages, unprocessedLabel) {
   // Find all filters that are associated to a "list:xxx" query and
   // that add a label.  These are the labels we need to process.
   //
@@ -229,7 +231,7 @@ function doMailingListsToInbox(allMessages) {
     if (('query' in filter.criteria) && ('addLabelIds' in filter.action) && filter.criteria.query.substr(0, 5) == 'list:') {
       var labelIds = filter.action.addLabelIds;
       for (j in labelIds) {
-        if (labelIds[j] != 'STARRED') {
+        if (labelIds[j] != unprocessedLabel) {
           mailingListLabels[labelIds[j]] = filter.criteria.query;
         }
       }
@@ -240,7 +242,7 @@ function doMailingListsToInbox(allMessages) {
   for (var i = 0; i < labels.length; i++) {
     var label = labels[i];
     if (label.type == 'user' && label.id in mailingListLabels) {
-      doMailingListToInbox(label.name, allMessages, 'to:me');
+      doMailingListToInbox(label.name, unprocessedLabel, allMessages, 'to:me');
     }
   }
 }
@@ -249,9 +251,9 @@ function gmailFilters() {
   var allMessages = [];
   var labelsByName = getLabelIdsByName();
   Logger.log('starting bugzilla filter')
-  doBugzilla(labelsByName, allMessages, "bugzilla");
+  doBugzilla(labelsByName, 'STARRED', allMessages, "bugzilla");
   Logger.log('starting mailing list filter')
-  doMailingListsToInbox(allMessages);
+  doMailingListsToInbox(allMessages, 'STARRED');
   Logger.log('processed ' + allMessages.length + ' messages')
   removeLabelFromMessages(allMessages, 'STARRED');
   Logger.log('done')
