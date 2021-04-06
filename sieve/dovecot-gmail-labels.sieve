@@ -25,6 +25,10 @@ if string :is "${global.respectinbox}" "y" {
   if header :contains "x-gmail-labels" "\\Inbox" {
     keep;
   }
+} else {
+  if not header :contains "x-gmail-labels" "\\Star" {
+    keep;
+  }
 }
 
 # add spaces to the sides to facilitate matching words
