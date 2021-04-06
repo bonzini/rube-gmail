@@ -194,31 +194,31 @@ function doBugzilla(labelsByName, unprocessedLabel, allMessages, label) {
 
 /////////////////////////////////////////////////////////////////////////
 
-function doMailingListToInbox(labelName, unprocessedLabel, allMessages, toCcQuery) {
+function doMailingListToFolder(labelName, unprocessedLabel, destLabel, allMessages, toCcQuery) {
   var unprocessedQuery = unprocessedLabel == 'STARRED' ? 'is:starred' : 'label:unprocessed';
   var messages = searchMessages(unprocessedQuery + ' label:' + labelName + ' ' + toCcQuery);
-  var messagesForInbox = [];
+  var messagesToLabel = [];
   for (i in messages) {
     var messageId = messages[i].id;
     allMessages.push(messageId);
-    messagesForInbox.push(messageId);
+    messagesToLabel.push(messageId);
   }
 
   messages = searchMessages(unprocessedQuery + ' label:' + labelName + ' -' + toCcQuery);
-  var messagesForInbox = [];
+  var messagesToLabel = [];
   for (i in messages) {
     var messageId = messages[i].id
     var msg = getMessageById(messageId)
     if (!hasHeader(msg, 'list-id')) {
-      messagesForInbox.push(messageId)
+      messagesToLabel.push(messageId)
     }
     allMessages.push(messageId)
   }
 
-  addLabelToMessages(messagesForInbox, 'INBOX');
+  addLabelToMessages(messagesToLabel, destLabel);
 }
 
-function doMailingListsToInbox(allMessages, unprocessedLabel) {
+function doMailingListsToFolder(allMessages, unprocessedLabel, destLabel) {
   // Find all filters that are associated to a "list:xxx" query and
   // that add a label.  These are the labels we need to process.
   //
@@ -242,7 +242,7 @@ function doMailingListsToInbox(allMessages, unprocessedLabel) {
   for (var i = 0; i < labels.length; i++) {
     var label = labels[i];
     if (label.type == 'user' && label.id in mailingListLabels) {
-      doMailingListToInbox(label.name, unprocessedLabel, allMessages, 'to:me');
+      doMailingListToFolder(label.name, unprocessedLabel, destLabel, allMessages, 'to:me');
     }
   }
 }
@@ -253,7 +253,7 @@ function gmailFilters() {
   Logger.log('starting bugzilla filter')
   doBugzilla(labelsByName, 'STARRED', allMessages, "bugzilla");
   Logger.log('starting mailing list filter')
-  doMailingListsToInbox(allMessages, 'STARRED');
+  doMailingListsToFolder(allMessages, 'STARRED', 'INBOX');
   Logger.log('processed ' + allMessages.length + ' messages')
   removeLabelFromMessages(allMessages, 'STARRED');
   Logger.log('done')
