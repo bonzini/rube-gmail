@@ -125,7 +125,7 @@ function removeLabelFromThreads(ids, label) {
 
 /////////////////////////////////////////////////////////////////////////
 
-function advancedBugzilla(label) {
+function doBugzilla(label) {
   // the actual filter
   var labelsByName = getLabelIdsByName();
   var LABEL_MINE = labelsByName[label + "/mine"];
@@ -194,13 +194,9 @@ function advancedBugzilla(label) {
   removeLabelFromMessages(allMessages, 'STARRED');
 }
 
-function advancedBugzillaFilter() {
-  advancedBugzilla("bugzilla")
-}
-
 /////////////////////////////////////////////////////////////////////////
 
-function advancedMailingListToInbox(labelName, toCcQuery) {
+function doMailingListToInbox(labelName, toCcQuery) {
   var messages = searchMessages('label:' + labelName + ' is:starred ' + toCcQuery);
   var allMessages = [];
   for (i in messages) {
@@ -226,7 +222,7 @@ function advancedMailingListToInbox(labelName, toCcQuery) {
   removeLabelFromMessages(allMessages, 'STARRED');
 }
 
-function advancedMailingListToInboxFilter() {
+function doMailingListToInboxFilter() {
   // Find all filters that are associated to a "list:xxx" query and
   // that add a label.  These are the labels we need to process.
   //
@@ -251,7 +247,15 @@ function advancedMailingListToInboxFilter() {
   for (var i = 0; i < labels.length; i++) {
     var label = labels[i];
     if (label.type == 'user' && label.id in mailingListLabels) {
-      advancedMailingListToInbox(label.name, 'to:me');
+      doMailingListToInbox(label.name, 'to:me');
     }
   }
+}
+
+function gmailFilters() {
+  Logger.log('starting bugzilla filter')
+  doBugzilla("bugzilla");
+  Logger.log('starting mailing list filter')
+  doMailingListToInboxFilter();
+  Logger.log('done')
 }
