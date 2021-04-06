@@ -53,6 +53,11 @@
 //    seeing List-id means (sufficient condition, but hopefully close enough
 //    to necessary...) that you got a direct copy.
 //
+// Patch filter
+// ------------
+// The patch filter moves "patch" emails out of the inbox and into an
+// "INBOX/patch" label.  It requires no server side filters.
+//
 // Author: Paolo Bonzini <pbonzini@redhat.com>
 // License: AGPLv3
 
@@ -89,6 +94,16 @@ function hasHeader(message, header) {
     }
   }
   return false;
+}
+
+function getHeader(message, header) {
+  var headersArray = message.payload.headers;
+  for (i = 0; i < headersArray.length; i++) {
+    if (headersArray[i].name.toLowerCase() == header) {
+      return headersArray[i].value;
+    }
+  }
+  return '';
 }
 
 function getMessageById(messageId) {
@@ -196,6 +211,52 @@ function doBugzilla(labelsByName, unprocessedLabel, allMessages, label) {
 
 /////////////////////////////////////////////////////////////////////////
 
+function isPatch(subject) {
+  if (subject.substring(0, 4) == "[Fwd") {
+    subject = subject.substring(1, subject.length - 1);
+  }
+  while(subject.substring(0, 1) != "[") {
+    match = /^[A-Za-z]+:\s*/.exec(subject);
+    if (!match) {
+      return false;
+    }
+    subject = subject.substring(match[0].length).trim()
+  }
+  while(subject.substring(0, 1) == "[") {
+    match = /^\[[^\]]*\]\s*/.exec(subject);
+    if (!match) {
+      return false;
+    }
+    if (match[0].toLowerCase().includes("patch")) {
+      return true;
+    }
+    subject = subject.substring(match[0].length).trim()
+  }
+  return false;
+}
+
+function doInboxPatches(labelsByName, patchLabel) {
+  var messages = searchMessages('in:inbox subject:patch is:unread');
+  var allMessages = [];
+  var patchMessages = [];
+  for (i in messages) {
+    var messageId = messages[i].id
+    var msg = getMessageById(messageId)
+    allMessages.push(messageId)
+    if (isPatch(getHeader(msg, 'subject'))) {
+      patchMessages.push(messageId)
+    }
+  }
+
+  if (patchMessages.length) {
+    addLabelToMessages(patchMessages, labelsByName[patchLabel]);
+  }
+  if (allMessages.length) {
+    removeLabelFromMessages(allMessages, 'INBOX');
+  }
+  Logger.log('found ' + patchMessages.length + ' patches in ' + allMessages.length + ' messages')
+}
+
 function doMailingListToFolder(labelName, unprocessedLabel, destLabel, allMessages, toCcQuery) {
   var unprocessedQuery = unprocessedLabel == 'STARRED' ? 'is:starred' : 'label:unprocessed';
   var messages = searchMessages(unprocessedQuery + ' label:' + labelName + ' ' + toCcQuery);
@@ -259,5 +320,9 @@ function gmailFilters() {
   doMailingListsToFolder(allMessages, labelsByName['unprocessed'], 'INBOX', 'to:me');
   Logger.log('processed ' + allMessages.length + ' messages')
   removeLabelFromMessages(allMessages, labelsByName['unprocessed']);
+  Logger.log('starting patch filter')
+  if ('INBOX/patch' in labelsByName) {
+    doInboxPatches(labelsByName, 'INBOX/patch');
+  }
   Logger.log('done')
 }
