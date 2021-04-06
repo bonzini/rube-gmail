@@ -258,6 +258,7 @@ function doInboxPatches(labelsByName, patchLabel) {
 }
 
 function doMailingListToFolder(labelName, unprocessedLabel, destLabel, allMessages, toCcQuery) {
+  labelName = labelName.replace(/[ /]/g, '-');
   var unprocessedQuery = unprocessedLabel == 'STARRED' ? 'is:starred' : 'label:unprocessed';
   var messages = searchMessages(unprocessedQuery + ' label:' + labelName + ' ' + toCcQuery);
   var messagesToLabel = [];
