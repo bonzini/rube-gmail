@@ -218,7 +218,7 @@ function doMailingListToFolder(labelName, unprocessedLabel, destLabel, allMessag
   addLabelToMessages(messagesToLabel, destLabel);
 }
 
-function doMailingListsToFolder(allMessages, unprocessedLabel, destLabel) {
+function doMailingListsToFolder(allMessages, unprocessedLabel, destLabel, toCcQuery) {
   // Find all filters that are associated to a "list:xxx" query and
   // that add a label.  These are the labels we need to process.
   //
@@ -242,7 +242,7 @@ function doMailingListsToFolder(allMessages, unprocessedLabel, destLabel) {
   for (var i = 0; i < labels.length; i++) {
     var label = labels[i];
     if (label.type == 'user' && label.id in mailingListLabels) {
-      doMailingListToFolder(label.name, unprocessedLabel, destLabel, allMessages, 'to:me');
+      doMailingListToFolder(label.name, unprocessedLabel, destLabel, allMessages, toCcQuery);
     }
   }
 }
@@ -253,7 +253,7 @@ function gmailFilters() {
   Logger.log('starting bugzilla filter')
   doBugzilla(labelsByName, 'STARRED', allMessages, "bugzilla");
   Logger.log('starting mailing list filter')
-  doMailingListsToFolder(allMessages, 'STARRED', 'INBOX');
+  doMailingListsToFolder(allMessages, 'STARRED', 'INBOX', 'to:me');
   Logger.log('processed ' + allMessages.length + ' messages')
   removeLabelFromMessages(allMessages, 'STARRED');
   Logger.log('done')
